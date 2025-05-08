@@ -1,0 +1,3 @@
+streamlit
+opencv-python
+ultralytics  # Voor YOLO (alleen nodig als YOLO wordt geïmplementeerd)
