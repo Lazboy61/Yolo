@@ -1,2 +1,20 @@
-# Python virtual environment
+# Virtual environment
+yolo_venv/
 venv/
+
+# Model weights
+*.pt
+*.pth
+*.weights
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# OS files
+.DS_Store
+
+# Large binaries
+**/*.dylib
+**/*.so
+**/*.dll
