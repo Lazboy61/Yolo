@@ -1,0 +1,15 @@
+# dataset.yaml (updated)
+path: /Users/hacakir/Documents/Project D/Yolo/dataset
+train: images/train
+val: images/val
+
+augment: True
+hsv_h: 0.015 # Hue
+hsv_s: 0.7 # Saturation
+hsv_v: 0.4 # Value
+flipud: 0.5 # Vertical flip
+
+names:
+  0: hand_one
+  1: hand_two
+  2: hand_three

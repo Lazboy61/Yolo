@@ -3,7 +3,7 @@ import cv2
 import time
 
 # Titel
-st.title("🎯 Camera met Objectfilter")
+st.title("Camera met Objectfilter")
 
 # Stap 1: Vraag gebruiker naar objecten die gedetecteerd mogen worden
 user_input = st.text_input("Welke objecten wil je detecteren? (bijv: car, person, dog):")
@@ -12,7 +12,7 @@ user_input = st.text_input("Welke objecten wil je detecteren? (bijv: car, person
 allowed_classes = [cls.strip().lower() for cls in user_input.split(",") if cls.strip()]
 
 # Stap 2: Camera activeren
-if st.button("📷 Maak foto"):
+if st.button("Maak foto"):
     cap = cv2.VideoCapture(0)
     ret, frame = cap.read()
     cap.release()
@@ -20,7 +20,7 @@ if st.button("📷 Maak foto"):
     if not ret:
         st.error("Kon geen beeld maken met de camera.")
     else:
-        st.image(frame, caption="📸 Gemaakte foto", channels="BGR")
+        st.image(frame, caption="Gemaakte foto", channels="BGR")
 
         st.info("Wachten op detectie...")
 
@@ -55,6 +55,6 @@ if st.button("📷 Maak foto"):
         if filtered_objects:
             st.success("Gedetecteerde objecten:")
             for name, conf in filtered_objects:
-                st.write(f"✅ {name} ({conf:.2%} vertrouwen)")
+                st.write(f"{name} ({conf:.2%} vertrouwen)")
         else:
             st.warning("Er zijn geen opgegeven objecten gevonden in de foto.")
