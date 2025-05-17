@@ -87,7 +87,7 @@ elif input_option == "Upload Image":
     
     if uploaded_file is not None:
         if uploaded_file.name.lower().endswith(('.png', '.jpg', '.jpeg')):
-            image = Image.open(uploaded_file)
+            image = Image.open(uploaded_file).convert('RGB')
             image_np = np.array(image)
             
             results = model(image_np, verbose=False)
