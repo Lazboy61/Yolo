@@ -1,15 +1,29 @@
-# dataset.yaml (updated)
 path: /Users/hacakir/Documents/Project D/Yolo/dataset
 train: images/train
 val: images/val
-
-augment: True
-hsv_h: 0.015 # Hue
-hsv_s: 0.7 # Saturation
-hsv_v: 0.4 # Value
-flipud: 0.5 # Vertical flip
-
+test: images/test
+# Class names should match your actual letters
 names:
-  0: hand_one
-  1: hand_two
-  2: hand_three
+  0: i
+  1: j
+  2: k
+  3: l
+  4: m
+  5: n
+  6: o
+  7: p
+
+# Enhanced augmentation
+augmentation:
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 15 # Rotation
+  translate: 0.1 # Translation
+  scale: 0.5 # Scale
+  shear: 0.0
+  perspective: 0.0001
+  flipud: 0.0 # Keep at 0 for gestures (flipping may change meaning)
+  fliplr: 0.5 # Horizontal flip
+  mosaic: 1.0 # Mosaic augmentation
+  mixup: 0.5 # Mixup augmentation
