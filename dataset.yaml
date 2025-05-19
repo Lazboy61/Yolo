@@ -1,29 +1,20 @@
-path: /Users/hacakir/Documents/Project D/Yolo/dataset
-train: images/train
-val: images/val
-test: images/test
-# Class names should match your actual letters
+# Paths (use augmented data)
+train: D:/Users/Gebruiker/Documents/Project D/Yolo/images/train_aug
+val: D:/Users/Gebruiker/Documents/Project D/Yolo/images/val
+
+# Number of classes (ONLY include classes you've labeled)
+nc: 2
 names:
   0: i
-  1: j
-  2: k
-  3: l
-  4: m
-  5: n
-  6: o
-  7: p
+  1: k
 
-# Enhanced augmentation
+# Augmentation (optimized for gestures)
 augmentation:
-  hsv_h: 0.015
-  hsv_s: 0.7
-  hsv_v: 0.4
-  degrees: 15 # Rotation
-  translate: 0.1 # Translation
-  scale: 0.5 # Scale
-  shear: 0.0
-  perspective: 0.0001
-  flipud: 0.0 # Keep at 0 for gestures (flipping may change meaning)
-  fliplr: 0.5 # Horizontal flip
-  mosaic: 1.0 # Mosaic augmentation
-  mixup: 0.5 # Mixup augmentation
+  hsv_h: 0.01  # Minimal hue change (skin tones)
+  hsv_s: 0.3    # Slight saturation variation
+  hsv_v: 0.2    # Small brightness changes
+  degrees: 12   # Moderate rotation range
+  flipud: 0.0   # No vertical flips
+  fliplr: 0.5   # 50% chance of horizontal flip (good for symmetric gestures)
+  mosaic: 0.5   # Reduced to avoid weird gesture composites
+  mixup: 0.1    # Very low to prevent blended gestures
