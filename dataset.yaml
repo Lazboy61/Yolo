@@ -1,20 +1,13 @@
-# Paths (use augmented data)
-train: D:/Users/Gebruiker/Documents/Project D/Yolo/images/train_aug
-val: D:/Users/Gebruiker/Documents/Project D/Yolo/images/val
+# D:\Users\Gebruiker\Documents\Project D\Yolo\dataset.yaml
+path: D:\Users\Gebruiker\Documents\Project D\Yolo  # Root folder
+train: asl_yolo_small/images/train  # Relative to root
+val: asl_yolo_small/images/train    # Same as train for small dataset
 
-# Number of classes (ONLY include classes you've labeled)
-nc: 2
+nc: 6  # Number of classes (I,J,K,L,M,N)
 names:
-  0: i
-  1: k
-
-# Augmentation (optimized for gestures)
-augmentation:
-  hsv_h: 0.01  # Minimal hue change (skin tones)
-  hsv_s: 0.3    # Slight saturation variation
-  hsv_v: 0.2    # Small brightness changes
-  degrees: 12   # Moderate rotation range
-  flipud: 0.0   # No vertical flips
-  fliplr: 0.5   # 50% chance of horizontal flip (good for symmetric gestures)
-  mosaic: 0.5   # Reduced to avoid weird gesture composites
-  mixup: 0.1    # Very low to prevent blended gestures
+  0: I
+  1: J
+  2: K
+  3: L
+  4: M
+  5: N
