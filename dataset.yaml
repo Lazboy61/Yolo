@@ -1,15 +1,13 @@
-# dataset.yaml (updated)
-path: /Users/hacakir/Documents/Project D/Yolo/dataset
-train: images/train
-val: images/val
+# D:\Users\Gebruiker\Documents\Project D\Yolo\dataset.yaml
+path: D:\Users\Gebruiker\Documents\Project D\Yolo  # Root folder
+train: asl_yolo_small/images/train  # Relative to root
+val: asl_yolo_small/images/train    # Same as train for small dataset
 
-augment: True
-hsv_h: 0.015 # Hue
-hsv_s: 0.7 # Saturation
-hsv_v: 0.4 # Value
-flipud: 0.5 # Vertical flip
-
+nc: 6  # Number of classes (I,J,K,L,M,N)
 names:
-  0: hand_one
-  1: hand_two
-  2: hand_three
+  0: I
+  1: J
+  2: K
+  3: L
+  4: M
+  5: N

@@ -12,7 +12,7 @@ st.title("YOLO Object Detection Demo")
 
 # --- 2. MODEL LOADING ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "runs", "detect", "train8", "weights", "best.pt")
+model_path = os.path.join(current_dir, "runs", "detect", "train18", "weights", "best.pt")
 
 # Model selection
 model_choice = st.sidebar.radio(
