@@ -1,20 +1,16 @@
-# Virtual environment
-yolo_venv/
-venv/
+# Dataset folders
+/archive/
+/asl_filtered/
+/asl_yolo/
+/asl_yolo_small/
+/images/
+/labels/
+/clean_dataset.zip
 
-# Model weights
-*.pt
-*.pth
-*.weights
+# Training outputs
+/runs/
 
-# Python cache
-__pycache__/
-*.py[cod]
-
-# OS files
+# System files
 .DS_Store
-
-# Large binaries
-**/*.dylib
-**/*.so
-**/*.dll
+__pycache__/
+*.pt  # Exclude all .pt files (we'll manually include the important ones)
