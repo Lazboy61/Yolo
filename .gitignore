@@ -1,16 +1,18 @@
-# Dataset folders
-/archive/
-/asl_filtered/
-/asl_yolo/
-/asl_yolo_small/
-/images/
-/labels/
-/clean_dataset.zip
+# dataset
+dataset/
+reduced_dataset/
 
-# Training outputs
-/runs/
+# YOLO trainingsoutputs behalve best.pt
+!runs/
+!runs/detect/
+!runs/detect/train27/
+!runs/detect/train27/weights/
+!runs/detect/train27/weights/best.pt
 
-# System files
-.DS_Store
-__pycache__/
-*.pt  # Exclude all .pt files (we'll manually include the important ones)
+# modelbestanden behalve de gekozen
+*.pt
+!runs/detect/train27/weights/best.pt
+
+# overig
+*.jpg
+*.txt
