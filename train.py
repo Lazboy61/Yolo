@@ -1,52 +1,46 @@
 import os
-import xml.etree.ElementTree as ET
+import shutil
+import random
 
-# Zet deze mappen naar jouw structuur
-xml_folder = "D:/Users/Gebruiker/Documents/Project D/Yolo/images/train_aug"
-output_folder = "D:/Users/Gebruiker/Documents/Project D/Yolo/labels/train_aug"
+# Locaties
+SOURCE_IMAGE_DIR = r"D:\Users\Gebruiker\Documents\Project D\Yolo\reduced_dataset"
+SOURCE_LABEL_DIR = os.path.join(SOURCE_IMAGE_DIR, "labels")
 
-# Mapping van class-namen naar nummers (YOLO-format)
-class_mapping = {
-    "i": 0,
-    "k": 1
-}
+DEST_IMAGE_DIR = r"D:\Users\Gebruiker\Documents\Project D\Yolo\dataset\images"
+DEST_LABEL_DIR = r"D:\Users\Gebruiker\Documents\Project D\Yolo\dataset\labels"
 
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+# Maak output folders aan
+for split in ["train", "val"]:
+    os.makedirs(os.path.join(DEST_IMAGE_DIR, split), exist_ok=True)
+    os.makedirs(os.path.join(DEST_LABEL_DIR, split), exist_ok=True)
 
-for xml_file in os.listdir(xml_folder):
-    if not xml_file.endswith(".xml"):
-        continue
+# Verwerk alle lettermappen (A-Z, etc.)
+all_image_paths = []
+for letter in os.listdir(SOURCE_IMAGE_DIR):
+    image_folder = os.path.join(SOURCE_IMAGE_DIR, letter)
+    label_folder = os.path.join(SOURCE_LABEL_DIR, letter)
+    
+    if os.path.isdir(image_folder) and os.path.isdir(label_folder):
+        for file in os.listdir(image_folder):
+            if file.endswith(".jpg"):
+                img_path = os.path.join(image_folder, file)
+                label_path = os.path.join(label_folder, file.replace(".jpg", ".txt"))
+                if os.path.exists(label_path):
+                    all_image_paths.append((img_path, label_path))
 
-    tree = ET.parse(os.path.join(xml_folder, xml_file))
-    root = tree.getroot()
+# Shuffle en split in train/val
+random.shuffle(all_image_paths)
+split_idx = int(len(all_image_paths) * 0.8)
+train_set = all_image_paths[:split_idx]
+val_set = all_image_paths[split_idx:]
 
-    image_width = int(root.find("size/width").text)
-    image_height = int(root.find("size/height").text)
+def copy_pairs(pairs, dest_image_subdir, dest_label_subdir):
+    for img_path, label_path in pairs:
+        basename = os.path.basename(img_path)
+        shutil.copy(img_path, os.path.join(dest_image_subdir, basename))
+        shutil.copy(label_path, os.path.join(dest_label_subdir, basename.replace(".jpg", ".txt")))
 
-    yolo_lines = []
+copy_pairs(train_set, os.path.join(DEST_IMAGE_DIR, "train"), os.path.join(DEST_LABEL_DIR, "train"))
+copy_pairs(val_set, os.path.join(DEST_IMAGE_DIR, "val"), os.path.join(DEST_LABEL_DIR, "val"))
 
-    for obj in root.findall("object"):
-        class_name = obj.find("name").text.lower()
-        if class_name not in class_mapping:
-            continue
-
-        class_id = class_mapping[class_name]
-        bbox = obj.find("bndbox")
-        xmin = int(bbox.find("xmin").text)
-        ymin = int(bbox.find("ymin").text)
-        xmax = int(bbox.find("xmax").text)
-        ymax = int(bbox.find("ymax").text)
-
-        # YOLO formaat: class x_center y_center width height (allemaal genormaliseerd)
-        x_center = ((xmin + xmax) / 2) / image_width
-        y_center = ((ymin + ymax) / 2) / image_height
-        width = (xmax - xmin) / image_width
-        height = (ymax - ymin) / image_height
-
-        yolo_lines.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
-
-    # Sla het .txt-bestand op met dezelfde naam
-    txt_filename = os.path.splitext(xml_file)[0] + ".txt"
-    with open(os.path.join(output_folder, txt_filename), "w") as f:
-        f.write("\n".join(yolo_lines))
+print(f"✅ Gekopieerd: {len(train_set)} train + {len(val_set)} val")
