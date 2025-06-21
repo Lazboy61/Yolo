@@ -1,18 +1,23 @@
-# dataset
-dataset/
-reduced_dataset/
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
 
-# YOLO trainingsoutputs behalve best.pt
-!runs/
-!runs/detect/
-!runs/detect/train27/
-!runs/detect/train27/weights/
-!runs/detect/train27/weights/best.pt
+# Virtual environment
+.venv/
+venv/
 
-# modelbestanden behalve de gekozen
+# Mac
+.DS_Store
+
+# Model/bestanden
 *.pt
-!runs/detect/train27/weights/best.pt
+*.backup
+labels/
+obj/
 
-# overig
-*.jpg
-*.txt
+# VS Code
+.vscode/
