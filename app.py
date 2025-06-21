@@ -19,17 +19,16 @@ st.set_page_config(
 # --- STIJLEN ---
 st.markdown("""
 <style>
-    .reportview-container {
-        background: #f0f2f6;
+    /* Verbeterde home page stijlen */
+    .home-content {
+        line-height: 1.6;
     }
-    .sidebar .sidebar-content {
-        background: #ffffff;
-    }
-    h1 {
+    .home-content h3 {
+        margin-top: 1.5rem;
         color: #2a3f5f;
     }
-    .stProgress > div > div > div > div {
-        background-color: #4a8cff;
+    .home-content ul {
+        padding-left: 1.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -73,36 +72,153 @@ def show_upload_section():
                 return None
 
 def show_camera_section():
-    st.subheader("📷 Live Camera")
-    if st.button("🎥 Start Camera", key="start_cam"):
-        st.session_state.camera_active = True
-        
-    if st.button("⏹️ Stop Camera", key="stop_cam"):
-        st.session_state.camera_active = False
-        if "cap" in st.session_state:
-            st.session_state.cap.release()
-            
+    st.subheader("📷 Live Camera Detectie")
+    
+    # Configuratie sectie
+    with st.expander("⚙️ Instellingen", expanded=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            detection_interval = st.slider("Detectie interval (seconden)", 1, 10, 5)
+            confidence_threshold = st.slider("Minimum confidence", 0.1, 1.0, 0.5, 0.05)
+        with col2:
+            show_live_feed = st.checkbox("Toon live feed", True)
+            show_annotations = st.checkbox("Toon annotaties", True)
+
+    # Start/Stop controls
+    start_col, stop_col, _ = st.columns([1, 1, 2])
+    with start_col:
+        if st.button("🎥 Start Detectie", key="start_detection"):
+            # Zorg dat vorige camera sessie goed is afgesloten
+            if "cap" in st.session_state:
+                st.session_state.cap.release()
+                del st.session_state.cap
+                
+            st.session_state.camera_active = True
+            st.session_state.last_detection_time = 0
+            st.session_state.detected_gestures = []
+            st.session_state.current_detection = None
+    
+    with stop_col:
+        if st.button("⏹️ Stop Detectie", key="stop_detection"):
+            st.session_state.camera_active = False
+            if "cap" in st.session_state:
+                st.session_state.cap.release()
+                del st.session_state.cap  # Verwijder de camera referentie
+
+  
+
+    # Resultaten display
+    result_placeholder = st.empty()
+    history_placeholder = st.container()
+    
+    # Camera feed en detectie
     if getattr(st.session_state, "camera_active", False):
-        cam_placeholder = st.empty()
-        status_text = st.empty()
+        feed_placeholder = st.empty()
+        model = load_model(model_path) if os.path.exists(model_path) else load_model("yolov8n.pt")
         
+        # Initialize camera
         if "cap" not in st.session_state:
             st.session_state.cap = cv2.VideoCapture(0)
-            
+            if not st.session_state.cap.isOpened():
+                st.error("Kan camera niet openen")
+                return None
+        
+        cap = st.session_state.cap
+        
         while st.session_state.camera_active:
-            ret, frame = st.session_state.cap.read()
+            ret, frame = cap.read()
             if not ret:
-                status_text.error("Kan camerabeeld niet ontvangen")
+                st.error("Kan camerabeeld niet ontvangen")
                 break
-                
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            cam_placeholder.image(frame, channels="RGB", use_column_width=True)
             
-            if st.button("📸 Maak Foto"):
-                return Image.fromarray(frame)
-                
-            time.sleep(0.1)
+            current_time = time.time()
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             
+            # Toon live feed indien aangevraagd
+            if show_live_feed:
+                display_frame = frame_rgb.copy()
+                
+                # Voeg huidige detectie toe als annotatie
+                if show_annotations and st.session_state.current_detection:
+                    label = st.session_state.current_detection['gesture']
+                    confidence = st.session_state.current_detection['confidence']
+                    cv2.putText(display_frame, 
+                               f"{label} ({confidence:.0%})",
+                               (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                               1, (0, 255, 0), 2)
+                
+                feed_placeholder.image(display_frame, channels="RGB", use_container_width=True)
+            
+            # Detectie logica
+            if current_time - st.session_state.get("last_detection_time", 0) >= detection_interval:
+                results = model(frame_rgb, verbose=False)
+                
+                if results[0].boxes:
+                    # Zoek de meest confidente detectie boven de threshold
+                    boxes = results[0].boxes
+                    valid_indices = [i for i, conf in enumerate(boxes.conf) if conf > confidence_threshold]
+                    
+                    if valid_indices:
+                        max_conf_idx = max(valid_indices, key=lambda i: boxes.conf[i])
+                        class_id = int(boxes.cls[max_conf_idx])
+                        label = model.names[class_id]
+                        confidence = float(boxes.conf[max_conf_idx])
+                        
+                        # Update huidige detectie
+                        st.session_state.current_detection = {
+                            "gesture": label,
+                            "confidence": confidence,
+                            "time": current_time
+                        }
+                        
+                        # Voeg toe aan geschiedenis
+                        if "detected_gestures" not in st.session_state:
+                            st.session_state.detected_gestures = []
+                        st.session_state.detected_gestures.append({
+                            "gesture": label,
+                            "confidence": confidence,
+                            "timestamp": time.strftime("%H:%M:%S")
+                        })
+                        
+                        # Update result display
+                        result_placeholder.success(
+                            f"🕒 {time.strftime('%H:%M:%S')} - "
+                            f"Gebaar: **{label.upper()}** "
+                            f"(confidence: {confidence:.2%})"
+                        )
+                    else:
+                        feedback_msg = """
+                        **🔍 Geen gebaar gedetecteerd - Tips:**
+                        - Zorg dat je hand goed zichtbaar is
+                        - Probeer dichter bij de camera te komen
+                        - Zorg voor goede verlichting
+                        - Houd je hand stabiel voor de camera
+                        - Probeer een ander gebaar
+                        """
+                        result_placeholder.markdown(feedback_msg)
+                else:
+                    result_placeholder.info("⏳ Geen gebaren gedetecteerd")
+                
+                st.session_state.last_detection_time = current_time
+            
+            time.sleep(0.1)  # Verminder CPU gebruik
+    
+    # Toon geschiedenis wanneer camera niet actief is
+    if "detected_gestures" in st.session_state and st.session_state.detected_gestures:
+        with history_placeholder:
+            st.subheader("📜 Detectie Geschiedenis")
+            for i, detection in enumerate(reversed(st.session_state.detected_gestures), 1):
+                st.write(
+                    f"{i}. 🕒 {detection['timestamp']} - "
+                    f"**{detection['gesture'].upper()}** "
+                    f"(confidence: {detection['confidence']:.2%})"
+                )
+                
+            if st.button("🧹 Geschiedenis wissen"):
+                st.session_state.detected_gestures = []
+                st.session_state.current_detection = None
+                st.rerun()
+
     return None
 
 def process_image(image, model, conf_threshold):
@@ -273,28 +389,40 @@ def main():
     tab1, tab2, tab3 = st.tabs(["🏠 Home", "🔍 Detectie", "📊 Geschiedenis"])
     
     with tab1:
-        st.subheader("Welkom bij de Handgebaar Detector!")
-        st.image("https://via.placeholder.com/800x300?text=HANDGEBAAR+DETECTIE", use_column_width=True)
-        
         st.markdown("""
-        ### Hoe werkt het?
-        1. Kies een model in de zijbalk
-        2. Upload een afbeelding of gebruik je camera
-        3. Bekijk de gedetecteerde gebaren
-        4. Analyseer de resultaten in het geschiedenisoverzicht
+        ## ✋ Welkom bij de Handgebaar Detector Pro
         
-        ### Ondersteunde gebaren
-        - Gebaar A: ...
-        - Gebaar B: ...
-        - Gebaar C: ...
+        **Detecteer en herken handgebaren in real-time** met behulp van geavanceerde YOLOv8 object detectie.
         """)
         
-        st.markdown("---")
         st.markdown("""
-        *Technologieën gebruikt in deze applicatie:*
-        - YOLOv8 voor objectdetectie
-        - Streamlit voor de gebruikersinterface
-        - OpenCV voor beeldverwerking
+        ### 🚀 Hoe werkt het?
+        
+        1. **Selecteer je model** - Kies tussen het standaard YOLO model of je eigen getrainde model
+        2. **Start detectie** - Gebruik de live camera of upload een afbeelding
+        3. **Bekijk resultaten** - Zie gedetecteerde gebaren met confidence scores
+        4. **Analyseer** - Bekijk de detectiegeschiedenis voor patronen
+        
+        ### 🔍 Ondersteunde functionaliteiten
+        
+        - Real-time handgebaurdetectie via webcam
+        - Afbeelding upload voor analyse
+        - Geschiedenis van eerdere detecties
+        - Aanpasbare confidence thresholds
+        - Interval-based detectie (elke X seconden)
+        
+        ### 🛠️ Technologieën
+        
+        - **YOLOv8** - Voor snelle en accurate objectdetectie
+        - **Streamlit** - Voor het gebruikersinterface
+        - **OpenCV** - Voor beeldverwerking
+        - **Python** - Backend logica
+        
+        ### 📌 Gebruikstips
+        
+        - Zorg voor goede verlichting bij camera gebruik
+        - Begin met een confidence threshold van 0.5 en pas aan indien nodig
+        - Gebruik het aangepaste model voor beste resultaten met je specifieke gebaren
         """)
     
     with tab2:
