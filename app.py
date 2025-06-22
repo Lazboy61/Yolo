@@ -436,18 +436,23 @@ def main():
         """)
         
         with st.expander("🚀 Quick Start Guide (60 seconds)"):
-            st.video("https://youtu.be/short-demo-link")  # Optional demo video
+            video_path = "/Users/hacakir/Desktop/Schermopname 2025-06-22 om 21.34.42.mov"
+            with open(video_path, "rb") as file:
+                video_bytes = file.read()
+
+            st.video(video_bytes)
             st.markdown("""
             1. **Camera Setup**  
-               - Ensure good lighting 💡  
-               - Position hands 30-50cm from webcam  
+            - Ensure good lighting 💡  
+            - Position hands 30-50cm from webcam  
             2. **Gesture Tips**  
-               - Hold each letter for 2 seconds ✋→🅰️  
-               - Avoid fast movements 🐢 > 🐇  
+            - Hold each letter for 2 seconds ✋→🅰️  
+            - Avoid fast movements 🐢 > 🐇  
             3. **Troubleshooting**  
-               - Refresh page if camera freezes ♻️  
-               - Lower confidence threshold if needed 📉  
+            - Refresh page if camera freezes ♻️  
+            - Lower confidence threshold if needed 📉  
             """)
+
         
     with tab2:
         st.header("Gesture Detection")
