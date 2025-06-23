@@ -1,8 +1,11 @@
-ultralytics
-opencv-python
-streamlit
-pillow
-pandas
-numpy
-pytest
-pytest-cov
+# Core Dependencies
+streamlit==1.22.0
+ultralytics==8.0.120
+opencv-python==4.7.0.72
+numpy==1.23.5
+pandas==1.5.3
+pillow==9.4.0
+
+# Development & Testing
+pytest==7.3.1
+pytest-cov==4.0.0
