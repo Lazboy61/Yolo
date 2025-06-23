@@ -1,8 +1,15 @@
-streamlit==1.22.0
-ultralytics==8.2.15
-opencv-python==4.7.0.72
+streamlit==1.45.1
+ultralytics==8.3.146
+torch==2.7.0
+torchvision==0.22.0
+opencv-python==4.11.0.86
 numpy==1.23.5
-pandas==1.5.3
-pillow==9.4.0
-pytest==7.3.1
+pandas==2.2.3
+pillow==11.2.1
+gitpython==3.1.44
+matplotlib==3.10.3
+scipy==1.15.3
+
+# Optioneel voor testen
+pytest==8.4.1
 pytest-cov==4.0.0

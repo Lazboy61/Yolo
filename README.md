@@ -34,3 +34,14 @@ Usage
 
 Run the application:
 streamlit run app.py
+
+### Troubleshooting
+
+#### 1. `TypeError: dataframe() got an unexpected keyword argument 'hide_index'`
+- **problem**: old Streamlit-version.  
+- **solution**: Upgrade Streamlit:  
+  ```bash
+  pip install --upgrade streamlit
+
+pip install ultralytics==8.3.146
+pip install torch==2.7.0 torchvision==0.22.0
