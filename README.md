@@ -1,38 +1,36 @@
-# 🧠 YOLO Object Detection App
+YOLO Object Detection Application
+Overview
 
-Deze applicatie maakt gebruik van **YOLO (You Only Look Once)** om objecten te herkennen in afbeeldingen of camerabeelden.
+This application provides real-time object detection using YOLO (You Only Look Once) through a Streamlit interface. It supports both live camera input and image uploads for detection.
 
-## 📸 Functionaliteit
+Features
 
-- Live camerabeeld openen via **Streamlit**
-- Mogelijkheid om één foto te maken
-- (In ontwikkeling) Objectherkenning via YOLO-model
-- Optie om handmatig een afbeelding te uploaden
+Live object detection from webcam feed
+Image upload functionality
+Custom YOLO model integration
+Detection history logging
+Installation
 
-## ▶️ Installatie & Setup
+Prerequisites
 
-1. **Clone de repository:**
+Python 3.8-3.10
+pip package manager
+Setup
 
-````bash
+Clone the repository:
 git clone https://github.com/Lazboy61/Yolo
-cd yolo
-Activeer je virtuele omgeving (optioneel maar aanbevolen):
+cd Yolo
+
+Create and activate virtual environment (Reccomended):
+bash
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+source venv/bin/activate # macOS/Linux
+venv\Scripts\activate # Windows
+
+Install dependencies:
 pip install -r requirements.txt
 
+Usage
 
-## Hardware Notes
-- Apple Silicon: Requires PyTorch nightly (`pip install --pre torch`)
-- NVIDIA GPU: Install CUDA-enabled PyTorch
-- CPU-only: May be slower
-## Download Pretrained Model
-Place custom model weights in:runs/detect/train/weights/best.pt
-
-### Windows Webcam Alternative
-Use OpenCV directly:
-```python
-import cv2
-cap = cv2.VideoCapture(0)
-````
+Run the application:
+streamlit run app.py
