@@ -4,6 +4,10 @@ from io import BytesIO
 import numpy as np
 from app import process_image, convert_to_format, load_model
 from unittest.mock import MagicMock, patch
+import torch
+from ultralytics.nn.tasks import DetectionModel
+
+torch.serialization.add_safe_globals([DetectionModel])
 
 @pytest.fixture
 def dummy_image():
