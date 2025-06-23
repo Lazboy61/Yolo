@@ -7,6 +7,7 @@ from io import BytesIO
 from PIL import Image
 from ultralytics import YOLO
 import streamlit as st
+import tempfile
 
 # --- PAGINA CONFIGURATIE ---
 st.set_page_config(
@@ -109,33 +110,23 @@ def process_image(image, model, conf_threshold):
     with st.spinner("Bezig met detectie..."):
         try:
             results = model(image, conf=conf_threshold, verbose=False)
-            
-            # Plot resultaten met aangepaste grootte
             annotated = results[0].plot()
-            annotated_pil = Image.fromarray(annotated[..., ::-1])  # BGR naar RGB
-            
-            # Schaal afbeelding voor betere weergave
+            annotated_pil = Image.fromarray(annotated[..., ::-1])
             max_width = 800
             width_percent = (max_width / float(annotated_pil.size[0]))
             height_size = int((float(annotated_pil.size[1]) * float(width_percent)))
             resized = annotated_pil.resize((max_width, height_size), Image.LANCZOS)
-            
             return results, resized
-            
         except Exception as e:
             st.error(f"Detectie mislukt: {str(e)}")
             return None, None
 
-def show_results(results, image, model):  # Voeg model parameter toe
+def show_results(results, image, model):
     if results and image:
         st.subheader("🔍 Detectie Resultaten")
-        
         col1, col2 = st.columns([2, 1])
-        
         with col1:
             st.image(image, caption="Gedetecteerde gebaren", use_column_width=True)
-            
-            # Download knop
             buf = BytesIO()
             image.save(buf, format="PNG")
             st.download_button(
@@ -144,25 +135,19 @@ def show_results(results, image, model):  # Voeg model parameter toe
                 file_name="detectie_resultaat.png",
                 mime="image/png"
             )
-            
         with col2:
             st.subheader("Statistieken")
-            
             if results[0].boxes:
                 for box in results[0].boxes:
                     class_id = int(box.cls[0])
-                    label = model.names[class_id]  # Nu correct gedefinieerd
+                    label = model.names[class_id]
                     conf = float(box.conf[0])
-                    
                     st.metric(
                         label=f"{label.upper()} Confidence",
                         value=f"{conf:.2%}",
                         help=f"Detectie zekerheid voor {label}"
                     )
-                    
                     st.progress(int(conf * 100))
-                    
-                # Voeg toe aan geschiedenis
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
                 for box in results[0].boxes:
                     st.session_state.history.append({
@@ -175,18 +160,13 @@ def show_results(results, image, model):  # Voeg model parameter toe
 
 def show_history():
     st.subheader("📊 Detectie Geschiedenis")
-    
     if st.session_state.history:
         df = pd.DataFrame(st.session_state.history)
-        
-        # Toon tabel
         st.dataframe(
             df.sort_values("timestamp", ascending=False),
             use_container_width=True,
             hide_index=True
         )
-        
-        # Download knop
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Exporteer naar CSV",
@@ -194,32 +174,81 @@ def show_history():
             file_name="detectie_geschiedenis.csv",
             mime="text/csv"
         )
-        
-        # Statistieken
         st.subheader("📈 Samenvatting")
         col1, col2 = st.columns(2)
-        
         with col1:
-            st.metric(
-                "Totaal detecties",
-                len(df),
-                help="Aantal keren dat gebaren zijn gedetecteerd"
-            )
-            
+            st.metric("Totaal detecties", len(df))
         with col2:
             most_common = df['label'].mode()[0] if not df.empty else "Geen"
-            st.metric(
-                "Meest voorkomend gebaar",
-                most_common.upper()
-            )
-            
+            st.metric("Meest voorkomend gebaar", most_common.upper())
         if st.button("🗑️ Wissen Geschiedenis", type="primary"):
             st.session_state.history = []
             st.success("Geschiedenis gewist!")
     else:
         st.info("Nog geen detecties uitgevoerd")
 
-# --- HOOFD APPLICATIE ---
+def show_video_to_text_section(model, conf_threshold):
+    st.markdown("🎬 Neem een korte video op via je webcam. Na afloop wordt automatisch herkende tekst gegenereerd.")
+
+    duration = st.slider("⏱️ Duur van video-opname (seconden)", 1, 10, 5)
+
+    if st.button("🎥 Start opname en genereer tekst"):
+        cap = cv2.VideoCapture(0)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = 10
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        video_path = "temp_video.mp4"
+        out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+
+        st.info("📹 Opname gestart...")
+
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            out.write(frame)
+            time.sleep(1 / fps)
+
+        cap.release()
+        out.release()
+        st.success("✅ Opname voltooid!")
+
+        # --- Analyse ---
+        st.video(video_path)
+        st.info("📊 Bezig met analyseren...")
+
+        cap = cv2.VideoCapture(video_path)
+        detected_letters = []
+        last_label = None
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(image)
+            results = model(pil_image, conf=conf_threshold, verbose=False)
+            if results and results[0].boxes:
+                for box in results[0].boxes:
+                    label = model.names[int(box.cls[0])].lower()
+                    if label != last_label:
+                        detected_letters.append(label)
+                        last_label = label
+            else:
+                last_label = None  # reset als er niets wordt gedetecteerd
+
+        cap.release()
+
+        if detected_letters:
+            text_output = ''.join(detected_letters).upper()
+            st.success("📄 Herkende tekst:")
+            st.markdown(f"### `{text_output}`")
+        else:
+            st.warning("Geen handgebaren herkend in de video.")
+
+
 def main():
     # --- SIDEBAR ---
     with st.sidebar:
@@ -257,7 +286,7 @@ def main():
         - Aangemaakt met YOLOv8
         - Streamlit interface
         """)
-    
+
     # --- MODEL LADEN ---
     if model_choice == "Standaard YOLOv8n":
         model = load_model("yolov8n.pt")
@@ -265,13 +294,14 @@ def main():
     else:
         model = load_model(model_path) if os.path.exists(model_path) else load_model("yolov8n.pt")
         st.sidebar.success("Aangepast model geladen!" if os.path.exists(model_path) else "Aangepast model niet gevonden, standaard model gebruikt")
-    
+
     # --- HOOFD CONTENT ---
     st.title("✋ Handgebaar Detector Pro")
     st.markdown("Detecteer handgebaren in real-time of via geüploade afbeeldingen")
-    
-    tab1, tab2, tab3 = st.tabs(["🏠 Home", "🔍 Detectie", "📊 Geschiedenis"])
-    
+
+    # ✅ 4 tabbladen: Home, Detectie, Geschiedenis, Video naar Tekst
+    tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🔍 Detectie", "📊 Geschiedenis", "🎬 Video naar Tekst"])
+
     with tab1:
         st.subheader("Welkom bij de Handgebaar Detector!")
         st.image("https://via.placeholder.com/800x300?text=HANDGEBAAR+DETECTIE", use_column_width=True)
@@ -282,13 +312,13 @@ def main():
         2. Upload een afbeelding of gebruik je camera
         3. Bekijk de gedetecteerde gebaren
         4. Analyseer de resultaten in het geschiedenisoverzicht
-        
+
         ### Ondersteunde gebaren
         - Gebaar A: ...
         - Gebaar B: ...
         - Gebaar C: ...
         """)
-        
+
         st.markdown("---")
         st.markdown("""
         *Technologieën gebruikt in deze applicatie:*
@@ -296,31 +326,34 @@ def main():
         - Streamlit voor de gebruikersinterface
         - OpenCV voor beeldverwerking
         """)
-    
+
     with tab2:
         st.header("Gebaar Detectie")
-        
+
         input_method = st.radio(
             "Invoermethode",
             ["Afbeelding Upload", "Live Camera"],
             horizontal=True
         )
-        
+
         image = None
         if input_method == "Afbeelding Upload":
             image = show_upload_section()
         else:
             image = show_camera_section()
-            
+
         if image:
             results, processed_img = process_image(image, model, conf_threshold)
-            show_results(results, processed_img, model)  # Vergeet niet de model parameter toe te voegen
-    
+            show_results(results, processed_img, model)
+
     with tab3:
         show_history()
 
-if __name__ == "__main__":
-    main()
+    with tab4:
+        st.header("🎬 Video naar Tekst")
+        show_video_to_text_section(model, conf_threshold)
+
+
 
     
 ##streamlit run app.py
