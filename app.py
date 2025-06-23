@@ -339,7 +339,7 @@ def main():
     # --- SIDEBAR ---
     with st.sidebar:
         # Logo section
-        logo_path = "/Users/hacakir/Downloads/HogeschoolRotterdam-655x500.png"
+        logo_path = "/Users/hacakir/Downloads/hogeschool-rotterdam.png.webp"
         if os.path.exists(logo_path):
             st.image(logo_path, width=150)
         else:
@@ -436,24 +436,21 @@ def main():
         """)
         
         with st.expander("🚀 Quick Start Guide (60 seconds)"):
-            video_path = "/Users/hacakir/Desktop/Schermopname 2025-06-22 om 21.34.42.mov"
-            with open(video_path, "rb") as file:
-                video_bytes = file.read()
-
-            st.video(video_bytes)
+            st.video("https://www.youtube.com/watch?v=_a7cVL9hqnk")
             st.markdown("""
             1. **Camera Setup**  
             - Ensure good lighting 💡  
             - Position hands 30-50cm from webcam  
+
             2. **Gesture Tips**  
             - Hold each letter for 2 seconds ✋→🅰️  
             - Avoid fast movements 🐢 > 🐇  
+
             3. **Troubleshooting**  
             - Refresh page if camera freezes ♻️  
             - Lower confidence threshold if needed 📉  
             """)
 
-        
     with tab2:
         st.header("Gesture Detection")
         
